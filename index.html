@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>CORRUPTED_PLAN.dat</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<style>
+:root {
+  --bg: #080c08;
+  --green: #00ff41;
+  --amber: #ffb300;
+  --red: #ff3333;
+  --dim-green: #1f3a1f;
+  --text: #b8d4b8;
+  --muted: #4a7a4a;
+  --mono: 'Courier New', Courier, monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--mono);overflow-x:hidden;}
+
+/* scanlines */
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.04) 2px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:9998;}
+
+/* ── HEADER ── */
+.hdr{padding:18px 16px 12px;border-bottom:1px solid var(--dim-green);text-align:center;position:sticky;top:0;background:var(--bg);z-index:50;}
+.hdr h1{font-size:1.1rem;color:var(--green);letter-spacing:.18em;text-transform:uppercase;animation:flicker 5s infinite;}
+.hdr p{font-size:.65rem;color:var(--muted);margin-top:4px;letter-spacing:.1em;}
+
+/* ── STAGES ── */
+.stages{padding:14px;display:flex;flex-direction:column;gap:14px;max-width:560px;margin:0 auto;padding-bottom:60px;}
+
+/* ── CARD ── */
+.card{border:1px solid var(--dim-green);border-radius:3px;overflow:hidden;}
+.card.locked{opacity:.65;}
+.card-head{background:#0a120a;padding:11px 14px;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--dim-green);}
+.card-num{font-size:.6rem;color:var(--muted);letter-spacing:.1em;white-space:nowrap;}
+.card-title{font-size:.88rem;color:var(--green);flex:1;letter-spacing:.04em;}
+.card-status{font-size:.62rem;padding:2px 7px;border-radius:2px;white-space:nowrap;}
+.status-active{color:var(--amber);border:1px solid var(--amber);}
+.status-locked{color:#333;border:1px solid #282828;}
+.status-done{color:var(--green);border:1px solid var(--green);}
+.card-body{padding:15px;}
+
+/* ── LOCKED PREVIEW ── */
+.lock-preview{font-size:.78rem;line-height:1.9;color:#2a3a2a;}
+.blk{background:#181818;color:#181818;border-radius:1px;padding:0 5px;display:inline;}
+.lock-time{margin-top:10px;font-size:.65rem;color:#333;letter-spacing:.1em;}
+
+/* ── TYPOGRAPHY ── */
+.label{font-size:.6rem;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #151e15;}
+.story{font-size:.83rem;line-height:1.95;color:var(--text);margin-bottom:14px;}
+.small{font-size:.7rem;}
+.dimtxt{color:var(--muted);}
+.greentxt{color:var(--green);}
+.ambertxt{color:var(--amber);}
+.redtxt{color:var(--red);}
+.mt8{margin-top:8px;}
+.mt14{margin-top:14px;}
+.mb8{margin-bottom:8px;}
+.mb14{margin-bottom:14px;}
+.tc{text-align:center;}
+hr.div{border:none;border-top:1px solid #151e15;margin:14px 0;}
+
+/* ── REDACTED WORD ── */
+.redacted{display:inline-block;background:#0a0a0a;border:1px solid #282828;color:#0a0a0a;padding:1px 10px;border-radius:2px;vertical-align:middle;min-width:70px;transition:all .4s;font-family:var(--mono);}
+.redacted.revealed{background:transparent;color:var(--amber);border-color:var(--amber);animation:popIn .5s ease;}
+
+/* ── INPUTS ── */
+.row{display:flex;gap:8px;align-items:stretch;margin-bottom:10px;}
+.inp{flex:1;background:#09120a;border:1px solid var(--dim-green);color:var(--green);font-family:var(--mono);font-size:.88rem;padding:10px 12px;border-radius:2px;outline:none;-webkit-appearance:none;}
+.inp:focus{border-color:var(--green);box-shadow:0 0 6px rgba(0,255,65,.15);}
+.inp.err{border-color:var(--red);}
+.inline-inp{background:transparent;border:none;border-bottom:1px solid var(--green);color:var(--green);font-family:var(--mono);font-size:.82rem;width:90px;padding:1px 3px;outline:none;}
+
+/* ── BUTTONS ── */
+.btn{background:transparent;border:1px solid var(--green);color:var(--green);font-family:var(--mono);font-size:.78rem;padding:9px 15px;border-radius:2px;cursor:pointer;letter-spacing:.07em;transition:all .18s;-webkit-tap-highlight-color:transparent;}
+.btn:hover,.btn:active{background:var(--green);color:#000;}
+.btn.amber{border-color:var(--amber);color:var(--amber);}
+.btn.amber:hover,.btn.amber:active{background:var(--amber);color:#000;}
+.btn.red{border-color:var(--red);color:var(--red);}
+.btn.red:hover,.btn.red:active{background:var(--red);color:#000;}
+.btn.full{width:100%;}
+.btn:disabled{opacity:.35;pointer-events:none;}
+.badge{display:inline-block;background:#001200;border:1px solid var(--green);color:var(--green);font-size:.68rem;padding:4px 12px;border-radius:2px;margin-top:10px;}
+
+/* ── MSG ── */
+.msg{font-size:.72rem;margin-bottom:10px;display:none;}
+.msg.show{display:block;animation:fadeIn .4s ease;}
+.msg.ok{color:var(--green);}
+.msg.bad{color:var(--red);}
+
+/* ── MAP ── */
+#map{width:100%;height:310px;border:1px solid var(--dim-green);border-radius:2px;margin-bottom:10px;}
+.map-prog{font-size:.72rem;color:var(--amber);text-align:center;margin-bottom:10px;}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:900;display:none;align-items:center;justify-content:center;padding:14px;}
+.overlay.on{display:flex;}
+.modal{background:#080e08;border:1px solid var(--green);border-radius:3px;padding:18px;width:100%;max-width:380px;max-height:92vh;overflow-y:auto;}
+.modal h2{font-size:.9rem;color:var(--green);margin-bottom:14px;letter-spacing:.07em;}
+.ph-img{width:100%;height:160px;border:1px dashed #2a3a2a;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:.7rem;color:#3a4a3a;margin-bottom:14px;}
+
+/* direction grid */
+.dir-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;max-width:180px;margin:0 auto 14px;}
+.dir-btn{background:#09120a;border:1px solid var(--dim-green);color:var(--text);font-family:var(--mono);font-size:.88rem;padding:11px;border-radius:2px;cursor:pointer;text-align:center;transition:all .18s;-webkit-tap-highlight-color:transparent;}
+.dir-btn.sel{background:var(--green);color:#000;border-color:var(--green);}
+.dir-btn.ghost{visibility:hidden;}
+.modal-row{display:flex;gap:8px;}
+
+/* compass */
+.compass-wrap{text-align:center;margin-bottom:14px;}
+.compass{width:76px;height:76px;border:2px solid var(--green);border-radius:50%;margin:0 auto 7px;position:relative;display:flex;align-items:center;justify-content:center;}
+.needle{width:3px;height:30px;background:linear-gradient(to bottom,var(--red) 50%,#aaa 50%);border-radius:2px;transform-origin:bottom center;position:absolute;bottom:50%;transition:transform .15s ease;}
+.compass-lbl{font-size:.62rem;color:var(--muted);}
+
+/* ── BINGO ── */
+.bingo-hint{background:#09120a;border:1px solid var(--dim-green);border-radius:2px;padding:12px;margin-bottom:14px;text-align:center;}
+.hint-ph{width:100%;max-width:220px;height:110px;background:#121e12;border:1px dashed #2a3a2a;margin:0 auto 7px;display:flex;align-items:center;justify-content:center;font-size:.62rem;color:#3a5a3a;border-radius:2px;}
+.hint-cap{font-size:.68rem;color:var(--amber);font-style:italic;}
+.bingo-wrap{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.bingo-col{display:flex;flex-direction:column;gap:5px;}
+.bingo-item{background:#09120a;border:1px solid var(--dim-green);padding:8px 7px;border-radius:2px;font-size:.72rem;color:var(--text);cursor:pointer;text-align:center;transition:all .18s;-webkit-tap-highlight-color:transparent;user-select:none;}
+.bingo-item.sel{border-color:var(--amber);color:var(--amber);background:#120e00;}
+.bingo-item.hit{border-color:var(--green);color:var(--green);background:#001200;pointer-events:none;}
+.bingo-item.wrong{border-color:var(--red);color:var(--red);animation:shake .4s ease;}
+
+/* ── TRAIL STOPS ── */
+.stop{border:1px solid var(--dim-green);border-radius:2px;padding:13px;margin-bottom:9px;transition:opacity .35s,border-color .35s;}
+.stop.locked-stop{opacity:.3;pointer-events:none;}
+.stop.active-stop{border-color:var(--amber);}
+.stop.done-stop{border-color:var(--green);opacity:.55;pointer-events:none;}
+.stop-name{font-size:.88rem;color:var(--amber);margin-bottom:5px;}
+.stop-desc{font-size:.78rem;color:var(--text);margin-bottom:9px;line-height:1.6;}
+.maps-link{display:inline-block;font-size:.65rem;color:var(--muted);border:1px solid #252525;padding:3px 8px;border-radius:2px;text-decoration:none;margin-bottom:9px;}
+.fill-story{font-size:.8rem;line-height:1.85;color:var(--text);margin-bottom:10px;}
+.photo-prompt{background:#120e00;border:1px solid #3a2a00;padding:10px;border-radius:2px;margin-bottom:9px;font-size:.78rem;color:var(--amber);}
+.fun-fact{font-size:.72rem;color:var(--text);line-height:1.6;margin-bottom:9px;}
+
+/* ── COUNTRY GRID ── */
+.country-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;}
+.cc{background:#09120a;border:1px solid var(--dim-green);border-radius:2px;padding:11px 9px;text-align:center;transition:all .3s;position:relative;overflow:hidden;}
+.cc.elim{opacity:.28;}
+.cc.elim::after{content:'✕';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:2.8rem;color:var(--red);opacity:.55;pointer-events:none;}
+.cc-flag{font-size:1.5rem;margin-bottom:5px;}
+.cc-name{font-size:.82rem;color:var(--text);margin-bottom:5px;}
+.cc-bar{font-size:.6rem;color:var(--red);margin-bottom:5px;letter-spacing:.05em;}
+.cc-clue{font-size:.68rem;color:#3a4a3a;margin-bottom:6px;min-height:28px;line-height:1.4;}
+.cc-clue.vis{color:var(--amber);}
+.india-msg{font-size:.68rem;color:var(--green);margin-top:5px;animation:fadeIn .4s ease;}
+
+/* ── FULLSCREEN REVEAL ── */
+.fsrev{position:fixed;inset:0;background:#000;z-index:1000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:22px;text-align:center;}
+.fsrev.on{display:flex;}
+.rev-ph{width:100%;max-width:280px;height:180px;background:#111;border:1px dashed #2a2a2a;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:.72rem;color:#444;margin-bottom:22px;animation:glitch 3s infinite;}
+.rev-title{font-size:1.05rem;color:var(--green);letter-spacing:.1em;margin-bottom:10px;animation:fadeIn 1s ease .4s both;}
+.rev-sub{font-size:.85rem;color:var(--muted);margin-bottom:22px;animation:fadeIn 1s ease .8s both;}
+.rev-info{font-size:1rem;color:var(--amber);margin-bottom:6px;}
+.rev-addr{font-size:.78rem;color:var(--text);margin-bottom:16px;}
+
+/* ── STAGE 5 WARM ── */
+.warm-body{font-family:Georgia,serif;color:#e0ccaa;line-height:1.95;font-size:.88rem;}
+.warm-final{font-size:1.05rem;color:#ff7a9a;text-align:center;margin-top:20px;font-family:Georgia,serif;}
+
+/* ── CONFETTI ── */
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:200;overflow:hidden;}
+.piece{position:absolute;top:-12px;width:8px;height:8px;animation:fall linear forwards;}
+
+/* ── ANIMATIONS ── */
+@keyframes flicker{0%,88%,100%{opacity:1}90%{opacity:.3}92%{opacity:1}95%{opacity:.6}97%{opacity:1}}
+@keyframes glitch{0%,100%{transform:translate(0)}15%{transform:translate(-2px,1px);filter:hue-rotate(90deg)}30%{transform:translate(2px,-1px)}60%{transform:translate(-1px,2px);filter:hue-rotate(0deg)}80%{transform:translate(1px,-1px)}}
+@keyframes popIn{0%{transform:scale(.7);opacity:0}60%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes fall{to{transform:translateY(110vh) rotate(600deg);opacity:0}}
+@keyframes reveal{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.glitch-anim{animation:glitch .6s ease;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>CORRUPTED_PLAN.dat</h1>
+  <p>recovery protocol active &bull; 5 fragments detected</p>
+</div>
+
+<div class="stages" id="stagesEl"></div>
+
+<!-- ═══════════ MARKER MODAL ═══════════ -->
+<div class="overlay" id="markerOverlay">
+  <div class="modal">
+    <h2 id="mTitle">MARKER_01</h2>
+    <div class="ph-img" id="mImg">📍 photo placeholder</div>
+    <div class="label">which direction does this face?</div>
+    <div class="dir-grid">
+      <div class="dir-btn ghost"></div>
+      <div class="dir-btn" data-d="N" onclick="pickDir('N')">N</div>
+      <div class="dir-btn ghost"></div>
+      <div class="dir-btn" data-d="W" onclick="pickDir('W')">W</div>
+      <div class="dir-btn ghost"></div>
+      <div class="dir-btn" data-d="E" onclick="pickDir('E')">E</div>
+      <div class="dir-btn ghost"></div>
+      <div class="dir-btn" data-d="S" onclick="pickDir('S')">S</div>
+      <div class="dir-btn ghost"></div>
+    </div>
+    <div class="compass-wrap">
+      <div class="compass"><div class="needle" id="needle"></div></div>
+      <div class="compass-lbl" id="compassLbl">compass: tap to activate</div>
+      <button class="btn small mt8" onclick="startCompass()" id="compassBtn">activate compass</button>
+    </div>
+    <div class="modal-row">
+      <button class="btn" style="flex:1" onclick="confirmMarker()">confirm ✓</button>
+      <button class="btn red" onclick="closeModal()">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ REVEAL 2c ═══════════ -->
+<div class="fsrev" id="rev2c">
+  <!-- PLACEHOLDER: replace div below with <img src="escape-academy.png" style="..."> -->
+  <div class="rev-ph">🎮 [ESCAPE ACADEMY LOGO — replace with real image]</div>
+  <div class="rev-title">Fragment 2 restored.</div>
+  <div class="rev-sub">Your next mission is at home 🎮</div>
+  <button class="btn" onclick="closeRev2c()">continue →</button>
+</div>
+
+<!-- ═══════════ REVEAL 4 ═══════════ -->
+<div class="fsrev" id="rev4">
+  <div style="font-size:2.5rem;margin-bottom:16px">🍛</div>
+  <div class="rev-title">Fragment 4 restored.</div>
+  <div class="rev-sub">Dinner awaits.</div>
+  <!-- PLACEHOLDER: fill in restaurant name -->
+  <div class="rev-info">Diwali Palace</div>
+  <!-- PLACEHOLDER: fill in address -->
+  <div class="rev-addr"><!-- PLACEHOLDER_ADDRESS --></div>
+  <!-- PLACEHOLDER: fill in Google Maps URL -->
+  <a class="btn amber mb14" href="PLACEHOLDER_MAPS_URL" target="_blank" rel="noopener">open in maps →</a>
+  <button class="btn" onclick="closeRev4()">continue →</button>
+</div>
+
+<div id="confetti"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// ╔══════════════════════════════════════════════════════╗
+// ║                   PLACEHOLDERS                       ║
+// ╚══════════════════════════════════════════════════════╝
+
+// PLACEHOLDER: dog name (case-insensitive match)
+const DOG_NAME = 'BUDDY';
+
+// PLACEHOLDER: map center [lat, lng] for the walk route
+const MAP_CENTER = [51.5074, -0.1278];
+const MAP_ZOOM   = 16;
+
+// PLACEHOLDER: Stage 3 unlock time "HH:MM" (24h)
+const STAGE3_TIME = '13:00';
+// PLACEHOLDER: Stage 4 unlock time "HH:MM" (24h)
+const STAGE4_TIME = '17:00';
+// Stage 5 unlock time (hardcoded per spec)
+const STAGE5_TIME = '18:45';
+
+// PLACEHOLDER: 8 map markers — fill in real lat/lng and names
+// Names must match BINGO_LEFT order
+const MARKERS = [
+  { name:'BARS',     lat:51.5080, lng:-0.1290 }, // PLACEHOLDER coords
+  { name:'SCHOOL',   lat:51.5085, lng:-0.1270 }, // PLACEHOLDER coords
+  { name:'BENCH',    lat:51.5090, lng:-0.1280 }, // PLACEHOLDER coords
+  { name:'GATE',     lat:51.5070, lng:-0.1300 }, // PLACEHOLDER coords
+  { name:'FOUNTAIN', lat:51.5065, lng:-0.1260 }, // PLACEHOLDER coords
+  { name:'BRIDGE',   lat:51.5095, lng:-0.1265 }, // PLACEHOLDER coords
+  { name:'STATUE',   lat:51.5060, lng:-0.1285 }, // PLACEHOLDER coords
+  { name:'SIGN',     lat:51.5075, lng:-0.1310 }, // PLACEHOLDER coords
+];
+
+// Bingo columns
+const BINGO_LEFT  = ['BARS','SCHOOL','BENCH','GATE','FOUNTAIN','BRIDGE','STATUE','SIGN'];
+const BINGO_RIGHT = ['ESCAPE','ACADEMY','ROUTE','MISSION','PORTAL','CODE','KEY','CIPHER'];
+
+// Correct direction (do NOT reveal to user)
+const CORRECT_DIR = 'W';
+
+// Which left items have valid connections (must also be answered CORRECT_DIR)
+// BARS → ESCAPE (index 0 → 0), SCHOOL → ACADEMY (index 1 → 1)
+const VALID_PAIRS = { 0: 0, 1: 1 };
+
+// PLACEHOLDER: marker placeholder image background colours
+const MARKER_COLORS = ['#1a2a1a','#1a1a2a','#2a1a1a','#2a2a1a','#1a2a2a','#2a1a2a','#222232','#1a2222'];
+
+// PLACEHOLDER: Amersfoort trail stops
+const STOPS = [
+  {
+    name: 'Rituals',
+    desc: 'A haven of calm in the middle of the city.',
+    // PLACEHOLDER: real Google Maps link
+    maps: 'https://maps.google.com/?q=Rituals+Amersfoort+centrum',
+    story: 'And then they walked into Rituals, and Ellie spent __0__ minutes smelling everything while Sam pretended not to enjoy it.',
+    blanks: ['...how many minutes?'],
+    photo: false,
+    fact: null,
+  },
+  {
+    name: 'Tara Buddha Store',
+    desc: 'Serenity, crystals, and things that make the soul feel lighter.',
+    // PLACEHOLDER: real Google Maps link
+    maps: 'https://maps.google.com/?q=Tara+Buddha+Amersfoort',
+    story: 'Inside, everything smelled like __0__ and looked like it had a story.',
+    blanks: ['...what did it smell like?'],
+    photo: false,
+    fact: null,
+  },
+  {
+    name: 'The Candy Shop',
+    desc: 'The unknown snack challenge.',
+    // PLACEHOLDER: real Google Maps link
+    maps: 'https://maps.google.com/?q=candy+shop+Amersfoort',
+    story: 'Sam picked __0__ for Ellie and Ellie picked __1__ for Sam, and honestly __2__ was the worst decision.',
+    blanks: ["Sam's pick for Ellie", "Ellie's pick for Sam", "...which one was the worst?"],
+    photo: false,
+    fact: null,
+  },
+  {
+    name: 'Koppelpoort',
+    desc: '',
+    // PLACEHOLDER: real Google Maps link
+    maps: 'https://maps.google.com/?q=Koppelpoort+Amersfoort',
+    story: null,
+    blanks: [],
+    photo: true,
+    // PLACEHOLDER: swap for a different/longer fun fact if desired
+    fact: 'The Koppelpoort was built around 1425 and is one of the best-preserved medieval water gates in the Netherlands — it served as both a city gate and a working water mill.',
+  },
+  {
+    name: 'Stadscafé Amersfoort',
+    desc: 'The end of the trail. Time to sit.',
+    // PLACEHOLDER: real Google Maps link
+    maps: 'https://maps.google.com/?q=Stadscafe+Amersfoort',
+    story: 'They sat down. Ellie ordered her famous __0__ and Sam ordered __1__. The city hummed around them.',
+    blanks: ['Ellie ordered...', 'Sam ordered...'],
+    photo: false,
+    fact: null,
+  },
+];
+
+// PLACEHOLDER: Country clues for Stage 4
+const COUNTRIES = [
+  { name:'India',     flag:'🇮🇳', c1:'CLUE_1_INDIA',     c2:'CLUE_2_INDIA'     },
+  { name:'Italy',     flag:'🇮🇹', c1:'CLUE_1_ITALY',     c2:'CLUE_2_ITALY'     },
+  { name:'Japan',     flag:'🇯🇵', c1:'CLUE_1_JAPAN',     c2:'CLUE_2_JAPAN'     },
+  { name:'Spain',     flag:'🇪🇸', c1:'CLUE_1_SPAIN',     c2:'CLUE_2_SPAIN'     },
+  { name:'France',    flag:'🇫🇷', c1:'CLUE_1_FRANCE',    c2:'CLUE_2_FRANCE'    },
+  { name:'Indonesia', flag:'🇮🇩', c1:'CLUE_1_INDONESIA', c2:'CLUE_2_INDONESIA' },
+  { name:'Turkey',    flag:'🇹🇷', c1:'CLUE_1_TURKEY',    c2:'CLUE_2_TURKEY'    },
+  { name:'USA',       flag:'🇺🇸', c1:'CLUE_1_USA',       c2:'CLUE_2_USA'       },
+  { name:'Greece',    flag:'🇬🇷', c1:'CLUE_1_GREECE',    c2:'CLUE_2_GREECE'    },
+  { name:'Thailand',  flag:'🇹🇭', c1:'CLUE_1_THAILAND',  c2:'CLUE_2_THAILAND'  },
+];
+
+// PLACEHOLDER: stage 5 personal message (HTML allowed)
+const S5_MESSAGE = `<p>[PLACEHOLDER: Write your personal message here — this is the warm closing note shown in Stage 5.]</p>`;
+
+// ╔══════════════════════════════════════════════════════╗
+// ║                  STATE / STORAGE                     ║
+// ╚══════════════════════════════════════════════════════╝
+const SK = 'corrupted_plan_v2';
+
+function defaultState() {
+  return {
+    s1: { solved: false, done: false },
+    s2: {
+      sub: 0,                // 0=map 1=bingo 2=complete
+      dirs: {},              // { markerIdx: 'N'|'E'|'S'|'W' }
+      matches: [],           // [[leftIdx, rightIdx], ...]
+      done: false,
+    },
+    s3: {
+      cur: 0,
+      answers: {},           // { stopIdx: ['a','b',...] }
+      done: false,
+    },
+    s4: {
+      strikes: {},           // { countryName: 0|1|2 }
+      done: false,
+    },
+    s5: { done: false },
+  };
+}
+
+let st = (function(){
+  try { const r = localStorage.getItem(SK); if(r) return JSON.parse(r); } catch(e){}
+  return defaultState();
+})();
+
+function save() { localStorage.setItem(SK, JSON.stringify(st)); }
+
+// ╔══════════════════════════════════════════════════════╗
+// ║                    TIME HELPERS                      ║
+// ╚══════════════════════════════════════════════════════╝
+function minsNow() { const d=new Date(); return d.getHours()*60+d.getMinutes(); }
+function minsOf(s) { const [h,m]=s.split(':').map(Number); return h*60+m; }
+function afterTime(t) { return minsNow() >= minsOf(t); }
+
+// ╔══════════════════════════════════════════════════════╗
+// ║                  UNLOCK CONDITIONS                   ║
+// ╚══════════════════════════════════════════════════════╝
+function unlocked(n) {
+  switch(n){
+    case 1: return true;
+    case 2: return st.s1.done;
+    case 3: return st.s2.done && afterTime(STAGE3_TIME);
+    case 4: return st.s3.done && afterTime(STAGE4_TIME);
+    case 5: return st.s4.done && afterTime(STAGE5_TIME);
+  }
+  return false;
+}
+
+function stageDone(n) {
+  return [null,st.s1.done,st.s2.done,st.s3.done,st.s4.done,st.s5.done][n];
+}
+
+// ╔══════════════════════════════════════════════════════╗
+// ║                     RENDER                           ║
+// ╚══════════════════════════════════════════════════════╝
+const TITLES = ['','FRAGMENT_01 // dog_walk','FRAGMENT_02 // the_map','FRAGMENT_03 // the_trail','FRAGMENT_04 // dinner','FRAGMENT_05 // evening'];
+
+function render() {
+  const el = document.getElementById('stagesEl');
+  el.innerHTML = '';
+  for(let i=1;i<=5;i++) el.appendChild(mkCard(i));
+  if(unlocked(2) && st.s2.sub===0 && !st.s2.done) setTimeout(initMap,80);
+  if(st.s5.done) launchConfetti();
+}
+
+function mkCard(n) {
+  const on = unlocked(n), done = stageDone(n);
+  const div = document.createElement('div');
+  div.className = 'card'+(on?'':' locked');
+  div.id = 'card'+n;
+  const sText = done ? 'RESTORED ✓' : (on ? 'ACTIVE' : 'LOCKED');
+  const sCls  = done ? 'status-done' : (on ? 'status-active' : 'status-locked');
+  div.innerHTML = `
+    <div class="card-head">
+      <span class="card-num">STAGE ${n}</span>
+      <span class="card-title">${TITLES[n]}</span>
+      <span class="card-status ${sCls}">${sText}</span>
+    </div>
+    <div class="card-body">${on ? body(n) : lockedPreview(n)}</div>`;
+  return div;
+}
+
+// ── LOCKED PREVIEWS ──
+function lockedPreview(n) {
+  const hints = {
+    2:`<div class="lock-preview"><span class="blk">████████</span> walk is just the beginning. The map holds <span class="blk">████████████</span> answers across <span class="blk">█</span> locations. Look closely at what <span class="blk">███████████████</span> faces.<div class="lock-time">[ complete stage 1 to unlock ]</div></div>`,
+    3:`<div class="lock-preview">The city of <span class="blk">██████████</span> awaits. A trail through <span class="blk">█</span> stops. Rituals. <span class="blk">████████████</span>. The old gate. Good coffee.<div class="lock-time">[ completes at ${STAGE3_TIME} after stage 2 ]</div></div>`,
+    4:`<div class="lock-preview"><span class="blk">██</span> countries remain in the database. Only one survives. The clues will guide you to <span class="blk">████████████████████</span>.<div class="lock-time">[ unlocks at ${STAGE4_TIME} after stage 3 ]</div></div>`,
+    5:`<div class="lock-preview"><span class="blk">████████████████████████████████████</span> <span class="blk">████████████</span> <span class="blk">████</span><div class="lock-time">[ unlocks at ${STAGE5_TIME} after stage 4 ]</div></div>`,
+  };
+  return hints[n] || '';
+}
+
+// ── BODY DISPATCHER ──
+function body(n) {
+  switch(n){case 1:return s1();case 2:return s2();case 3:return s3();case 4:return s4();case 5:return s5();}
+  return '';
+}
+
+// ╔══════════════════════════════════════════════════════╗
+// ║                    STAGE 1                           ║
+// ╚══════════════════════════════════════════════════════╝
+function s1() {
+  const {solved, done} = st.s1;
+  const word = solved
+    ? `<span class="redacted revealed">${DOG_NAME}</span>`
+    : `<span class="redacted">[REDACTED]</span>`;
+  return `
+    <div class="label">day recovered... fragment 1 of 5</div>
+    <div class="story">
+      The plan begins simply. After breakfast, ${word} needs a walk.
+      The route is familiar. The air is fresh.
+      Some things were never corrupted.
+    </div>
+    ${solved ? `<div class="msg ok show">✓ corruption restored — "${DOG_NAME}" recovered</div>` : ''}
+    ${!solved ? `
+      <div class="row">
+        <input class="inp" id="s1inp" type="text" placeholder="type the name..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+        <button class="btn" onclick="checkS1()">restore</button>
+      </div>
+      <div class="msg bad" id="s1err">incorrect — try again</div>
+    ` : ''}
+    ${solved && !done ? `<button class="btn amber full mt8" onclick="doneS1()">mark as complete — unlock stage 2 →</button>` : ''}
+    ${done ? `<div class="badge">✓ fragment 1 restored</div>` : ''}`;
+}
+
+function checkS1() {
+  const v = document.getElementById('s1inp').value.trim().toLowerCase();
+  if(v === DOG_NAME.toLowerCase()) {
+    st.s1.solved = true; save(); render();
+  } else {
+    const e = document.getElementById('s1err'); e.classList.add('show');
+    const i = document.getElementById('s1inp'); i.classList.add('err');
+    setTimeout(()=>{ e.classList.remove('show'); i.classList.remove('err'); },2000);
+  }
+}
+function doneS1(){ st.s1.done=true; save(); render(); }
+document.addEventListener('keydown',e=>{ if(e.key==='Enter'&&document.getElementById('s1inp')===document.activeElement) checkS1(); });
+
+// ╔══════════════════════════════════════════════════════╗
+// ║                    STAGE 2                           ║
+// ╚══════════════════════════════════════════════════════╝
+function s2() {
+  if(st.s2.done) return `<div class="badge">✓ fragment 2 restored — mission: escape academy 🎮</div>`;
+  if(st.s2.sub===0) return s2a();
+  if(st.s2.sub===1) return s2b();
+  return '';
+}
+
+// ── 2a: MAP ──
+function s2a() {
+  const ans = Object.keys(st.s2.dirs).length;
+  const tot = MARKERS.length;
+  const all = ans >= tot;
+  return `
+    <div class="label">sub-step 2a // the map</div>
+    <div class="map-prog" id="mapProg">markers located: ${ans} / ${tot}</div>
+    <div id="map"></div>
+    <div class="small dimtxt mb8">tap a numbered marker — pick the direction it faces</div>
+    ${all ? `
+      <hr class="div">
+      <div class="small greentxt mb8">✓ all markers located</div>
+      <button class="btn" onclick="goS2b()">proceed to word association →</button>
+    ` : ''}`;
+}
+
+// ── 2b: BINGO ──
+function s2b() {
+  const hits = st.s2.matches;
+  return `
+    <div class="label">sub-step 2b // word association</div>
+    <div class="bingo-hint">
+      <div class="hint-ph">
+        <!-- PLACEHOLDER: replace with <img src="ciao-bella-map.png" ...> — Google Maps screenshot of Ciao Bella Restaurant, London, with compass overlay pointing West -->
+        📍 [map screenshot: Ciao Bella Restaurant, London — compass → West]
+      </div>
+      <div class="hint-cap">"face what you know"</div>
+    </div>
+    <div class="small dimtxt mb8">connect objects to their associated words. only correctly-oriented objects have valid matches.</div>
+    <div class="bingo-wrap">
+      <div class="bingo-col" id="bleft">
+        ${BINGO_LEFT.map((w,i)=>{
+          const done=hits.some(m=>m[0]===i);
+          return `<div class="bingo-item${done?' hit':''}" id="bl${i}" onclick="pickLeft(${i})">${w}</div>`;
+        }).join('')}
+      </div>
+      <div class="bingo-col" id="bright">
+        ${BINGO_RIGHT.map((w,i)=>{
+          const done=hits.some(m=>m[1]===i);
+          return `<div class="bingo-item${done?' hit':''}" id="br${i}" onclick="pickRight(${i})">${w}</div>`;
+        }).join('')}
+      </div>
+    </div>
+    <div class="small greentxt" id="bingoSt">${hits.length}/2 connections found</div>`;
+}
+
+function goS2b(){ st.s2.sub=1; save(); render(); }
+
+// ╔══════════════════════════════════════════════════════╗
+// ║                  LEAFLET MAP                         ║
+// ╚══════════════════════════════════════════════════════╝
+let leafMap = null;
+function initMap() {
+  const el = document.getElementById('map'); if(!el) return;
+  if(leafMap){ leafMap.remove(); leafMap=null; }
+  leafMap = L.map('map').setView(MAP_CENTER, MAP_ZOOM);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(leafMap);
+  MARKERS.forEach((m,i)=>{
+    const answered = st.s2.dirs[i] !== undefined;
+    const icon = L.divIcon({
+      html:`<div style="background:${answered?'#00ff41':'#ffb300'};color:#000;font-weight:bold;font-size:11px;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #000;font-family:monospace;">${i+1}</div>`,
+      className:'',iconSize:[26,26],iconAnchor:[13,13]
+    });
+    L.marker([m.lat,m.lng],{icon}).addTo(leafMap).on('click',()=>openModal(i));
+  });
+}
+
+// ╔══════════════════════════════════════════════════════╗
+// ║                  MARKER MODAL                        ║
+// ╚══════════════════════════════════════════════════════╝
+let curMarker = null, chosenDir = null, compassOn = false;
+
+function openModal(idx) {
+  curMarker = idx; chosenDir = st.s2.dirs[idx] || null;
+  const m = MARKERS[idx];
+  document.getElementById('mTitle').textContent = `${m.name} — MARKER ${idx+1}`;
+  document.getElementById('mImg').style.background = MARKER_COLORS[idx];
+  document.getElementById('mImg').textContent = `📍 photo ${idx+1} — replace with real image`;
+  document.querySelectorAll('.dir-btn[data-d]').forEach(b=> b.classList.toggle('sel', b.dataset.d===chosenDir));
+  document.getElementById('markerOverlay').classList.add('on');
+}
+function closeModal() {
+  document.getElementById('markerOverlay').classList.remove('on');
+  stopCompass(); curMarker=null; chosenDir=null;
+}
+function pickDir(d) {
+  chosenDir = d;
+  document.querySelectorAll('.dir-btn[data-d]').forEach(b=> b.classList.toggle('sel', b.dataset.d===d));
+}
+function confirmMarker() {
+  if(!chosenDir){ alert('Select a direction first.'); return; }
+  st.s2.dirs[curMarker] = chosenDir; save(); closeModal();
+  const ans = Object.keys(st.s2.dirs).length;
+  const prog = document.getElementById('mapProg');
+  if(prog) prog.textContent = `markers located: ${ans} / ${MARKERS.length}`;
+  initMap();
+  if(ans >= MARKERS.length) render();
+}
+
+// ╔══════════════════════════════════════════════════════╗
+// ║                    COMPASS                           ║
+// ╚══════════════════════════════════════════════════════╝
+function startCompass() {
+  if(typeof DeviceOrientationEvent === 'undefined'){
+    document.getElementById('compassLbl').textContent = 'compass: not supported on this device';
+    return;
+  }
+  if(typeof DeviceOrientationEvent.requestPermission === 'function'){
+    DeviceOrientationEvent.requestPermission()
+      .then(s=>{ if(s==='granted') enableCompass(); else document.getElementById('compassLbl').textContent='compass: permission denied'; })
+      .catch(()=> document.getElementById('compassLbl').textContent='compass: error');
+  } else {
+    enableCompass();
+  }
+}
+function enableCompass() {
+  compassOn = true;
+  document.getElementById('compassBtn').style.display='none';
+  window.addEventListener('deviceorientation', onOrient, true);
+}
+function stopCompass() {
+  compassOn = false;
+  window.removeEventListener('deviceorientation', onOrient, true);
+}
+function onOrient(e) {
+  if(!compassOn) return;
+  const n=document.getElementById('needle'), l=document.getElementById('compassLbl');
+  if(!n||!l) return;
+  let a = e.webkitCompassHeading != null ? e.webkitCompassHeading : e.alpha;
+  if(a==null){ l.textContent='compass: no data'; return; }
+  n.style.transform = `rotate(${a}deg)`;
+  const dirs=['N','NE','E','SE','S','SW','W','NW'];
+  l.textContent = `pointing: ${dirs[Math.round(a/45)%8]} (${Math.round(a)}°)`;
+}
+
+// ╔══════════════════════════════════════════════════════╗
+// ║                    BINGO LOGIC                       ║
+// ╚══════════════════════════════════════════════════════╝
+let bLeft=null, bRight=null;
+
+function pickLeft(i) {
+  if(st.s2.matches.some(m=>m[0]===i)) return;
+  clearWrong();
+  bLeft=i;
+  document.querySelectorAll('#bleft .bingo-item').forEach((el,j)=>{ if(!st.s2.matches.some(m=>m[0]===j)) el.classList.toggle('sel',j===i); });
+  if(bRight!==null) tryMatch();
+}
+function pickRight(i) {
+  if(st.s2.matches.some(m=>m[1]===i)) return;
+  clearWrong();
+  bRight=i;
+  document.querySelectorAll('#bright .bingo-item').forEach((el,j)=>{ if(!st.s2.matches.some(m=>m[1]===j)) el.classList.toggle('sel',j===i); });
+  if(bLeft!==null) tryMatch();
+}
+function clearWrong() { document.querySelectorAll('.bingo-item.wrong').forEach(e=>e.classList.remove('wrong')); }
+
+function tryMatch() {
+  const l=bLeft, r=bRight; bLeft=null; bRight=null;
+  const lEl=document.getElementById('bl'+l), rEl=document.getElementById('br'+r);
+  if(!lEl||!rEl) return;
+  lEl.classList.remove('sel'); rEl.classList.remove('sel');
+
+  const markerAns = st.s2.dirs[l];          // what she answered for this marker
+  const validR    = VALID_PAIRS[l];          // which right index is correct for this left
+  const dirOk     = markerAns === CORRECT_DIR;
+  const pairOk    = validR === r;
+
+  if(dirOk && pairOk) {
+    st.s2.matches.push([l,r]); save();
+    lEl.classList.add('hit'); rEl.classList.add('hit');
+    const st2 = document.getElementById('bingoSt');
+    if(st2) st2.textContent = `${st.s2.matches.length}/2 connections found`;
+    if(st.s2.matches.length >= 2) setTimeout(()=>{ st.s2.sub=2; save(); showRev2c(); },700);
+  } else {
+    lEl.classList.add('wrong');
+    if(!dirOk) { setTimeout(()=>lEl.classList.remove('wrong'),600); }
+    else { rEl.classList.add('wrong'); setTimeout(()=>{ lEl.classList.remove('wrong'); rEl.classList.remove('wrong'); },600); }
+  }
+}
+
+function showRev2c() { document.getElementById('rev2c').classList.add('on'); }
+function closeRev2c() { document.getElementById('rev2c').classList.remove('on'); st.s2.done=true; save(); render(); }
+
+// ╔══════════════════════════════════════════════════════╗
+// ║                    STAGE 3                           ║
+// ╚══════════════════════════════════════════════════════╝
+function s3() {
+  if(st.s3.done) return `<div class="badge">✓ fragment 3 restored — trail complete</div>`;
+  return `
+    <div class="label">amersfoort centrum trail — ${st.s3.cur}/${STOPS.length} stops complete</div>
+    ${STOPS.map((s,i)=>stopHtml(s,i)).join('')}`;
+}
+
+function stopHtml(stop, i) {
+  const done   = i < st.s3.cur;
+  const active = i === st.s3.cur;
+  const cls    = done ? 'stop done-stop' : (active ? 'stop active-stop' : 'stop locked-stop');
+  const saved  = st.s3.answers[i] || [];
+
+  let storyHtml = '';
+  if(stop.story) {
+    let tmpl = stop.story;
+    stop.blanks.forEach((ph,bi)=>{
+      const val = saved[bi] || '';
+      const fld = done
+        ? `<span class="ambertxt">${val||'...'}</span>`
+        : `<input class="inline-inp" id="s3-${i}-${bi}" value="${escHtml(val)}" placeholder="${ph}" oninput="saveBlank(${i},${bi},this.value)" />`;
+      tmpl = tmpl.replace(`__${bi}__`, fld);
+    });
+    storyHtml = `<div class="fill-story">${tmpl}</div>`;
+  }
+
+  let photoHtml = '';
+  if(stop.photo) {
+    photoHtml = `
+      <div class="photo-prompt">📸 Photo moment! Take a picture here.</div>
+      <div class="fun-fact">${stop.fact}</div>`;
+  }
+
+  return `
+    <div class="${cls}" id="stop${i}">
+      ${done ? '<div class="small greentxt mb8">✓ we were here</div>' : ''}
+      <div class="stop-name">${i+1}. ${stop.name}</div>
+      ${stop.desc ? `<div class="stop-desc">${stop.desc}</div>` : ''}
+      ${(active||done) ? `<a class="maps-link" href="${stop.maps}" target="_blank" rel="noopener">📍 open in maps →</a>` : ''}
+      ${storyHtml}
+      ${photoHtml}
+      ${active ? `<button class="btn amber" onclick="confirmStop(${i})">we were here ✓</button>` : ''}
+    </div>`;
+}
+
+function saveBlank(i,bi,v) {
+  if(!st.s3.answers[i]) st.s3.answers[i]=[];
+  st.s3.answers[i][bi]=v; save();
+}
+function confirmStop(i) {
+  const stop = STOPS[i];
+  if(stop.blanks) stop.blanks.forEach((_,bi)=>{ const el=document.getElementById(`s3-${i}-${bi}`); if(el) saveBlank(i,bi,el.value); });
+  st.s3.cur = i+1; save();
+  if(st.s3.cur >= STOPS.length){ st.s3.done=true; save(); }
+  render();
+}
+
+// ╔══════════════════════════════════════════════════════╗
+// ║                    STAGE 4                           ║
+// ╚══════════════════════════════════════════════════════╝
+function s4() {
+  if(st.s4.done) return `<div class="badge">✓ fragment 4 restored — dinner: diwali palace 🍛</div>`;
+  const elim = Object.values(st.s4.strikes).filter(v=>v>=2).length;
+  return `
+    <div class="label">country elimination // ${10-elim} remaining — eliminate 9</div>
+    <div class="small dimtxt mb14">strike a country twice to eliminate it. one must survive.</div>
+    <div class="country-grid">${COUNTRIES.map(c=>ccHtml(c)).join('')}</div>`;
+}
+
+function ccHtml(c) {
+  const str = st.s4.strikes[c.name] || 0;
+  const elim = str >= 2;
+  const s1v  = str >= 1, s2v = str >= 2;
+  return `
+    <div class="cc${elim?' elim':''}" id="cc-${c.name}">
+      <div class="cc-flag">${c.flag}</div>
+      <div class="cc-name">${c.name}</div>
+      <div class="cc-bar">${str>0?'▊'.repeat(str):''}${'░'.repeat(2-Math.min(str,2))} ${str}/2</div>
+      <div class="cc-clue${s1v?' vis':''}">${s1v?c.c1:'[ clue locked ]'}</div>
+      ${s2v?`<div class="cc-clue vis">${c.c2}</div>`:''}
+      ${!elim?`<button class="btn red small full" onclick="strikeC('${c.name}')">⚡ strike</button>`:''}
+    </div>`;
+}
+
+function strikeC(name) {
+  if(name==='India') {
+    const el=document.getElementById('cc-India'); if(!el) return;
+    el.classList.add('glitch-anim');
+    setTimeout(()=>el.classList.remove('glitch-anim'),700);
+    if(!el.querySelector('.india-msg')) {
+      const msg=document.createElement('div'); msg.className='india-msg'; msg.textContent='...this one feels right';
+      el.appendChild(msg);
+    }
+    return;
+  }
+  if(!st.s4.strikes[name]) st.s4.strikes[name]=0;
+  if(st.s4.strikes[name]>=2) return;
+  st.s4.strikes[name]++; save();
+  const elim=Object.values(st.s4.strikes).filter(v=>v>=2).length;
+  if(elim>=9){ st.s4.done=true; save(); setTimeout(showRev4,400); return; }
+  render();
+}
+
+function showRev4(){ document.getElementById('rev4').classList.add('on'); }
+function closeRev4(){ document.getElementById('rev4').classList.remove('on'); render(); }
+
+// ╔══════════════════════════════════════════════════════╗
+// ║                    STAGE 5                           ║
+// ╚══════════════════════════════════════════════════════╝
+function s5() {
+  return `
+    <div class="warm-body">${S5_MESSAGE}</div>
+    <div class="warm-final">All fragments restored. Happy anniversary ❤️</div>
+    ${!st.s5.done?`<button class="btn full mt14" style="border-color:#ff7a9a;color:#ff7a9a;" onclick="doneS5()">✨ finish</button>`:''}`;
+}
+function doneS5(){ st.s5.done=true; save(); launchConfetti(); render(); }
+
+// ╔══════════════════════════════════════════════════════╗
+// ║                   CONFETTI                           ║
+// ╚══════════════════════════════════════════════════════╝
+let confettiFired = false;
+function launchConfetti() {
+  if(confettiFired) return; confettiFired=true;
+  const box=document.getElementById('confetti');
+  const cols=['#ff7a9a','#ffcc44','#44ffaa','#44aaff','#ff44cc','#ffffff','#ffb300'];
+  for(let i=0;i<90;i++) {
+    const p=document.createElement('div'); p.className='piece';
+    p.style.left=Math.random()*100+'vw';
+    p.style.background=cols[Math.floor(Math.random()*cols.length)];
+    p.style.width=(Math.random()*7+4)+'px'; p.style.height=(Math.random()*7+4)+'px';
+    p.style.borderRadius=Math.random()>.5?'50%':'2px';
+    p.style.animationDuration=(Math.random()*3+2.5)+'s';
+    p.style.animationDelay=(Math.random()*2.5)+'s';
+    box.appendChild(p); p.addEventListener('animationend',()=>p.remove());
+  }
+}
+
+// ╔══════════════════════════════════════════════════════╗
+// ║                   UTILITIES                          ║
+// ╚══════════════════════════════════════════════════════╝
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// Auto re-check time locks every 30s (in case she has the app open across a time boundary)
+setInterval(render, 30000);
+
+// ── BOOT ──
+render();
+</script>
+</body>
+</html>
