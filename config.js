@@ -118,4 +118,4 @@ const RESTAURANT_MAP_URL = 'https://maps.app.goo.gl/cFo5U85xVe9pcEuX8';
 
 // ── STAGE 5 MESSAGE ────────────────────────────────────────────
 
-const S5_MESSAGE = `<p>[I hope you enjoyed today <3.]</p>`;
+const S5_MESSAGE = `<p>I hope you enjoyed today <3.</p>`;

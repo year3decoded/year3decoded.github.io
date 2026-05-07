@@ -582,7 +582,6 @@ function ccHtml(c) {
       <div class="cc-flag">${c.flag}</div>
       <div class="cc-name">${c.name}</div>
       <div class="cc-bar">${'▊'.repeat(hits.length)}${'░'.repeat(Math.max(0, 2 - hits.length))} ${hits.length}/2</div>
-      ${c.name === 'India' && hits.length >= 1 ? `<div class="india-msg">…this one feels right</div>` : ''}
     </div>`;
 }
 
