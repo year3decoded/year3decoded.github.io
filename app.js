@@ -30,8 +30,9 @@ function defaultState() {
       done:    false,
     },
     s4: {
-      strikes: {},   // { countryName: 0|1|2 }
-      done:    false,
+      selectedRule: null, // null | 1 | 2 | 3 | 4
+      strikes:      {},   // { countryName: number[] } — rule IDs applied
+      done:         false,
     },
     s5: { done: false },
   };
@@ -124,7 +125,7 @@ function lockedPreview(n) {
   const previews = {
     2: `${noiseDiv()}<div class="lock-preview">${corruptText('The',s)} <span class="blk">████████</span> ${corruptText('walk is just the beginning. The map holds',s+3)} <span class="blk">████████████</span> ${corruptText('answers. Look closely at what',s+9)} <span class="blk">███████████████</span> ${corruptText('faces.',s+12)}<div class="lock-time">[ ${corruptText('finish the morning walk to continue',s+15)} ]</div></div>`,
     3: `${noiseDiv()}<div class="lock-preview">${corruptText('The city of',s)} <span class="blk">██████████</span> ${corruptText('awaits. A trail through',s+3)} <span class="blk">█</span> ${corruptText('stops — Rituals,',s+7)} <span class="blk">████████████</span>${corruptText(', the old gate.',s+10)}<div class="lock-time">[ ${corruptText('finish the map to continue',s+13)} ]</div></div>`,
-    4: `${noiseDiv()}<div class="lock-preview"><span class="blk">██</span> ${corruptText('countries. Only one survives. The clues will lead you to',s)} <span class="blk">████████████████████</span><div class="lock-time">[ ${corruptText('finish the trail to continue',s+8)} ]</div></div>`,
+    4: `${noiseDiv()}<div class="lock-preview"><span class="blk">██</span> ${corruptText('countries. Only one survives. Apply each rule — one must remain.',s)} <span class="blk">████████████████████</span><div class="lock-time">[ ${corruptText('finish the trail to continue',s+8)} ]</div></div>`,
     5: `${noiseDiv()}<div class="lock-preview"><span class="blk">████████████████████████████████████</span> <span class="blk">████████████</span> <span class="blk">████</span><div class="lock-time">[ ${corruptText('finish dinner to continue',s+2)} ]</div></div>`,
   };
   return previews[n] || '';
@@ -556,49 +557,67 @@ function confirmStop(i) {
 // ╚══════════════════════════════════════════════════════════════╝
 function s4() {
   if (st.s4.done) return `<div class="badge">✓ fragment 4 restored ${heartSVG()} — dinner: ${RESTAURANT_NAME} 🍛</div>`;
-  const elim = Object.values(st.s4.strikes).filter(v => v >= 2).length;
+  const elimCount = Object.values(st.s4.strikes).filter(a => a.length >= 2).length;
+  const sel = st.s4.selectedRule;
   return `
-    <div class="label">country elimination // ${10 - elim} remaining — eliminate 9</div>
-    <div class="small dimtxt mb14">strike a country twice to eliminate it. one must survive.</div>
+    <div class="label">country elimination // ${elimCount}/7 eliminated</div>
+    <div class="small dimtxt mb10">select a rule, then tap each country you think it applies to.</div>
+    <div class="rules-panel">
+      ${RULES.map(r => `<div class="rule-btn${sel === r.id ? ' sel' : ''}" onclick="selectRule(${r.id})">
+        <span class="rule-num">Rule ${r.id}</span><span class="rule-text">${r.text}</span>
+      </div>`).join('')}
+    </div>
+    <div class="small${sel ? ' ambertxt' : ' dimtxt'} mb10">${sel ? `rule ${sel} selected — tap countries to apply` : 'tap a rule above to select it'}</div>
     <div class="country-grid">${COUNTRIES.map(c => ccHtml(c)).join('')}</div>`;
 }
 
 function ccHtml(c) {
-  const str  = st.s4.strikes[c.name] || 0;
-  const elim = str >= 2;
-  const s1v  = str >= 1;
-  const s2v  = str >= 2;
+  const hits    = st.s4.strikes[c.name] || [];
+  const elim    = hits.length >= 2;
+  const sel     = st.s4.selectedRule;
+  const capped  = c.name === 'India' && hits.length >= 1;
+  const tappable = sel && !elim && !capped;
   return `
-    <div class="cc${elim ? ' elim' : ''}" id="cc-${c.name}">
+    <div class="cc${elim ? ' elim' : ''}${tappable ? ' tappable' : ''}" id="cc-${c.name}"${tappable ? ` onclick="applyRule('${c.name}')"` : ''}>
       <div class="cc-flag">${c.flag}</div>
       <div class="cc-name">${c.name}</div>
-      <div class="cc-bar">${str > 0 ? '▊'.repeat(str) : ''}${'░'.repeat(2 - Math.min(str, 2))} ${str}/2</div>
-      <div class="cc-clue${s1v ? ' vis' : ''}">${s1v ? c.c1 : '[ clue locked ]'}</div>
-      ${s2v ? `<div class="cc-clue vis">${c.c2}</div>` : ''}
-      ${!elim ? `<button class="btn red small full" onclick="strikeC('${c.name}')">⚡ strike</button>` : ''}
+      <div class="cc-bar">${'▊'.repeat(hits.length)}${'░'.repeat(Math.max(0, 2 - hits.length))} ${hits.length}/2</div>
+      ${c.name === 'India' && hits.length >= 1 ? `<div class="india-msg">…this one feels right</div>` : ''}
     </div>`;
 }
 
-function strikeC(name) {
-  if (name === 'India') {
-    const el = document.getElementById('cc-India');
-    if (!el) return;
-    el.classList.add('glitch-anim');
-    setTimeout(() => el.classList.remove('glitch-anim'), 700);
-    if (!el.querySelector('.india-msg')) {
-      const msg = document.createElement('div');
-      msg.className = 'india-msg';
-      msg.textContent = '…this one feels right';
-      el.appendChild(msg);
+function selectRule(id) {
+  st.s4.selectedRule = (st.s4.selectedRule === id) ? null : id;
+  save();
+  render();
+}
+
+function applyRule(name) {
+  const rule = st.s4.selectedRule;
+  if (!rule) return;
+  if (!st.s4.strikes[name]) st.s4.strikes[name] = [];
+  const hits = st.s4.strikes[name];
+  if (name === 'India' && hits.length >= 1) return;
+  if (hits.length >= 2) return;
+  if (hits.includes(rule)) return;
+  const ruleObj = RULES.find(r => r.id === rule);
+  if (!ruleObj || !ruleObj.applies.includes(name)) return;
+  hits.push(rule);
+  save();
+  const elimCount = Object.values(st.s4.strikes).filter(a => a.length >= 2).length;
+  if (hits.length >= 2) {
+    const el = document.getElementById('cc-' + name);
+    if (el) el.classList.add('just-elim');
+    if (elimCount >= 7) {
+      st.s4.done = true;
+      st._completedAt_4 = Date.now();
+      save();
+      setTimeout(showRev4, 800);
+      return;
     }
+    setTimeout(() => render(), 700);
     return;
   }
-  if (!st.s4.strikes[name]) st.s4.strikes[name] = 0;
-  if (st.s4.strikes[name] >= 2) return;
-  st.s4.strikes[name]++;
-  save();
-  const elim = Object.values(st.s4.strikes).filter(v => v >= 2).length;
-  if (elim >= 9) { st.s4.done = true; st._completedAt_4 = Date.now(); save(); setTimeout(showRev4, 400); return; }
   render();
 }
 
@@ -682,7 +701,7 @@ function _completeStage(n) {
       st.s3.done = true;
       break;
     case 4:
-      COUNTRIES.forEach(c => { if (c.name !== 'India') st.s4.strikes[c.name] = 2; });
+      COUNTRIES.forEach(c => { if (c.name !== 'India') st.s4.strikes[c.name] = [1, 2]; });
       st.s4.done = true;
       break;
     case 5:

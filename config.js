@@ -41,7 +41,7 @@ const STOPS = [
     name:   'Rituals',
     desc:   'A perfect smell in the middle of the city.',
     // PLACEHOLDER: real Google Maps link
-    maps:   'https://maps.google.com/?q=Rituals+Amersfoort+centrum',
+    maps:   'https://maps.app.goo.gl/3kw3UcRFg4jpYktu9',
     story:  'We walked into Rituals, and Ellie spent __0__ minutes smelling everything, while Sam pretended not to enjoy it.',
     blanks: ['...how many minutes?'],
     photo:  false,
@@ -51,7 +51,7 @@ const STOPS = [
     name:   'Tara Buddha Store',
     desc:   'Smells, crystals, and things that make the soul feel lighter.',
     // PLACEHOLDER: real Google Maps link
-    maps:   'https://maps.google.com/?q=Tara+Buddha+Amersfoort',
+    maps:   'https://maps.app.goo.gl/6Weyimf42LXkAMGg9',
     story:  'Inside, everything smelled like __0__ and looked like it had a story.',
     blanks: ['...what did it smell like?'],
     photo:  false,
@@ -61,7 +61,7 @@ const STOPS = [
     name:   'The Candy Shop',
     desc:   'The unknown snack challenge.',
     // PLACEHOLDER: real Google Maps link
-    maps:   'https://maps.google.com/?q=candy+shop+Amersfoort',
+    maps:   'https://maps.app.goo.gl/yGeqwSNCz5eLe9Dq7',
     story:  'Sam picked __0__ for Ellie and Ellie picked __1__ for Sam, and honestly __2__ was better than expected.',
     blanks: ["Sam's pick for Ellie", "Ellie's pick for Sam", "...which one was better?"],
     photo:  false,
@@ -71,7 +71,7 @@ const STOPS = [
     name:   'Koppelpoort',
     desc:   '',
     // PLACEHOLDER: real Google Maps link
-    maps:   'https://maps.google.com/?q=Koppelpoort+Amersfoort',
+    maps:   'https://maps.app.goo.gl/1YJdzDshD5vvDBVK7',
     story:  null,
     blanks: [],
     photo:  true,
@@ -82,7 +82,7 @@ const STOPS = [
     name:   'Stadscafé Amersfoort',
     desc:   'The end of the trail. Time to sit and drink.',
     // PLACEHOLDER: real Google Maps link
-    maps:   'https://maps.google.com/?q=Stadscafe+Amersfoort',
+    maps:   'https://maps.app.goo.gl/BFDVULF4EjyqNq9b7',
     story:  'We sat down. Ellie ordered __0__ and Sam ordered __1__.',
     blanks: ['Ellie ordered...', 'Sam ordered...'],
     photo:  false,
@@ -91,26 +91,31 @@ const STOPS = [
 ];
 
 // ── STAGE 4 DINNER ─────────────────────────────────────────────
-// PLACEHOLDER: fill in CLUE_1 and CLUE_2 for each country
+// Rules shown all at once. applies[] = the countries each rule correctly hits.
+const RULES = [
+  { id: 1, text: 'Country is located in Europe',       applies: ['Italy', 'France', 'Greece']                                   },
+  { id: 2, text: 'Country name has 6 or more letters', applies: ['Mexico', 'France', "Turkey", 'Morocco', 'Greece', 'Thailand'] },
+  { id: 3, text: 'Country is known for spicy food',    applies: ['India', 'Mexico', 'Morocco', 'Thailand']                      },
+  { id: 4, text: 'Country name ends in the letter Y',  applies: ['Italy', 'Turkey']                                             },
+];
+
 const COUNTRIES = [
-  { name:'India',     flag:'🇮🇳', c1:'CLUE_1_INDIA',     c2:'CLUE_2_INDIA'     },
-  { name:'Italy',     flag:'🇮🇹', c1:'CLUE_1_ITALY',     c2:'CLUE_2_ITALY'     },
-  { name:'Japan',     flag:'🇯🇵', c1:'CLUE_1_JAPAN',     c2:'CLUE_2_JAPAN'     },
-  { name:'Spain',     flag:'🇪🇸', c1:'CLUE_1_SPAIN',     c2:'CLUE_2_SPAIN'     },
-  { name:'France',    flag:'🇫🇷', c1:'CLUE_1_FRANCE',    c2:'CLUE_2_FRANCE'    },
-  { name:'Indonesia', flag:'🇮🇩', c1:'CLUE_1_INDONESIA', c2:'CLUE_2_INDONESIA' },
-  { name:'Turkey',    flag:'🇹🇷', c1:'CLUE_1_TURKEY',    c2:'CLUE_2_TURKEY'    },
-  { name:'USA',       flag:'🇺🇸', c1:'CLUE_1_USA',       c2:'CLUE_2_USA'       },
-  { name:'Greece',    flag:'🇬🇷', c1:'CLUE_1_GREECE',    c2:'CLUE_2_GREECE'    },
-  { name:'Thailand',  flag:'🇹🇭', c1:'CLUE_1_THAILAND',  c2:'CLUE_2_THAILAND'  },
+  { name: 'India',    flag: '🇮🇳' },
+  { name: 'Italy',    flag: '🇮🇹' },
+  { name: 'Mexico',   flag: '🇲🇽' },
+  { name: 'France',   flag: '🇫🇷' },
+  { name: 'Turkey',   flag: '🇹🇷' },
+  { name: 'Morocco',  flag: '🇲🇦' },
+  { name: 'Greece',   flag: '🇬🇷' },
+  { name: 'Thailand', flag: '🇹🇭' },
 ];
 
 // PLACEHOLDER: restaurant address shown in the Stage 4 reveal
 const RESTAURANT_NAME    = 'Diwali Palace';
-const RESTAURANT_ADDRESS = 'PLACEHOLDER_ADDRESS';
-// PLACEHOLDER: Google Maps URL for the restaurant
-const RESTAURANT_MAP_URL = 'PLACEHOLDER_MAPS_URL';
+const RESTAURANT_ADDRESS = 'Piet Mondriaanplein 189-193, 3812 GZ Amersfoort';
+
+const RESTAURANT_MAP_URL = 'https://maps.app.goo.gl/cFo5U85xVe9pcEuX8';
 
 // ── STAGE 5 MESSAGE ────────────────────────────────────────────
-// PLACEHOLDER: write your personal message here — HTML is allowed
+
 const S5_MESSAGE = `<p>[I hope you enjoyed today <3.]</p>`;
