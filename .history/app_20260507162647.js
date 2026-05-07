@@ -19,10 +19,9 @@ function defaultState() {
     s2: {
       sub:     0,     // 0=map  1=bingo  2=complete
       dirs:    {},    // { markerIdx: 'N'|'E'|'S'|'W' }
-      matches:    [],    // [[leftIdx, rightDisplayPos], ...]
-      shuffle:    null,  // shuffled right column (display pos → original index)
-      gameChoice: null,  // 'escape' | 'valorant' | 'both'
-      done:       false,
+      matches: [],    // [[leftIdx, rightDisplayPos], ...]
+      shuffle: null,  // shuffled right column (display pos → original index)
+      done:    false,
     },
     s3: {
       cur:     0,
@@ -156,7 +155,7 @@ function s1() {
       The path is familiar, time to take a breath of fresh air.
       The walk awaits.
     </div>
-    ${solved ? `<div class="msg ok show">✓ corruption restored - "${DOG_NAME}" recovered ${heartSVG()}</div>` : ''}
+    ${solved ? `<div class="msg ok show">✓ corruption restored — "${DOG_NAME}" recovered ${heartSVG()}</div>` : ''}
     ${!solved ? `
       <div class="row">
         <input class="inp" id="s1inp" type="text"
@@ -192,10 +191,7 @@ function doneS1() { st.s1.done = true; st._completedAt_1 = Date.now(); save(); r
 // ║  STAGE 2 — MAP PUZZLE                                        ║
 // ╚══════════════════════════════════════════════════════════════╝
 function s2() {
-  if (st.s2.done) {
-    const label = { escape: 'escape academy 🎮', valorant: 'valorant 🔫', both: 'escape academy & valorant 🎮🔫' }[st.s2.gameChoice] || '🎮';
-    return `<div class="badge">✓ fragment 2 restored ${heartSVG()} — Afternoon gaming: ${label}</div>`;
-  }
+  if (st.s2.done) return `<div class="badge">✓ fragment 2 restored ${heartSVG()} — mission: escape academy 🎮</div>`;
   if (st.s2.sub === 0) return s2a();
   if (st.s2.sub === 1) return s2b();
   return '';
@@ -209,7 +205,7 @@ function s2a() {
     <div class="label">sub-step 2a // the map</div>
     <div class="map-prog" id="mapProg">markers located: ${ans} / ${tot}</div>
     <div id="map"></div>
-    <div class="small dimtxt mb8">tap a numbered marker and pick the direction it faces</div>
+    <div class="small dimtxt mb8">tap a numbered marker — pick the direction it faces</div>
     ${all ? `
       <hr class="div">
       <div class="small greentxt mb8">✓ all markers located</div>
@@ -227,8 +223,11 @@ function s2b() {
   return `
     <div class="label">sub-step 2b // word association</div>
     <div class="bingo-hint">
-      <div class="hint-fact">✦ did you know?</div>
-      <div class="hint-cap">Our first date was at a restaurant facing West.</div>
+      <div class="hint-ph">
+        <!-- PLACEHOLDER: replace with <img src="./img/ciao-bella-map.png" style="width:100%;height:100%;object-fit:cover;border-radius:2px;"> -->
+        📍 [map screenshot: Ciao Bella Restaurant, London — compass → West]
+      </div>
+      <div class="hint-cap">"face what you know"</div>
     </div>
     <div class="small dimtxt mb8">connect each object to its associated word — objects facing the right direction will bloom.</div>
     <div class="bingo-wrap">
@@ -314,7 +313,7 @@ function closeModal() {
 }
 
 function pickDir(d) {
-  if (d !== MARKERS[curMarker].dir) {
+  if (d !== CORRECT_DIR) {
     const btn = document.querySelector(`.dir-btn[data-d="${d}"]`);
     if (btn) {
       btn.classList.add('sel-wrong');
@@ -342,7 +341,7 @@ function confirmMarker() {
 }
 
 // ╔══════════════════════════════════════════════════════════════╗
-// ║  COMPASS  (Android-first, iOS fallback)                      ║
+// ║  COMPASS  (Android-first, iOS fallback)                     ║
 // ╚══════════════════════════════════════════════════════════════╝
 let compassActive = false;
 
@@ -451,17 +450,10 @@ function tryMatch() {
   lEl.classList.remove('sel');
   rEl.classList.remove('sel');
 
-  if (st.s2.shuffle[r] !== l) {
-    lEl.classList.add('wrong');
-    rEl.classList.add('wrong');
-    setTimeout(() => { lEl.classList.remove('wrong'); rEl.classList.remove('wrong'); }, 600);
-    return;
-  }
-
   st.s2.matches.push([l, r]);
   save();
 
-  const cls = st.s2.dirs[l] === MARKERS[l].dir ? 'floral' : 'wrong-dir';
+  const cls = st.s2.dirs[l] === CORRECT_DIR ? 'floral' : 'wrong-dir';
   lEl.classList.add(cls);
   rEl.classList.add(cls);
 
@@ -474,7 +466,6 @@ function tryMatch() {
 }
 
 function showRev2c() { document.getElementById('rev2c').classList.add('on'); }
-function pickGame(choice) { st.s2.gameChoice = choice; closeRev2c(); }
 function closeRev2c() {
   document.getElementById('rev2c').classList.remove('on');
   st.s2.done = true; st._completedAt_2 = Date.now();
@@ -666,7 +657,7 @@ function _completeStage(n) {
       st.s1.done   = true;
       break;
     case 2: {
-      MARKERS.forEach((m, i) => { st.s2.dirs[i] = m.dir; });
+      MARKERS.forEach((_, i) => { st.s2.dirs[i] = 'W'; });
       const shuf = [...Array(BINGO_RIGHT.length).keys()].sort(() => Math.random() - .5);
       st.s2.shuffle = shuf;
       st.s2.matches = BINGO_LEFT.map((_, i) => [i, shuf.indexOf(i)]);
@@ -707,7 +698,7 @@ function devReset() {
 }
 
 function devSkipAllDirs() {
-  MARKERS.forEach((m, i) => { st.s2.dirs[i] = m.dir; });
+  MARKERS.forEach((_, i) => { st.s2.dirs[i] = CORRECT_DIR; });
   save();
   closeModal();
   render();

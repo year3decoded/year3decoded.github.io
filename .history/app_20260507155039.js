@@ -19,10 +19,8 @@ function defaultState() {
     s2: {
       sub:     0,     // 0=map  1=bingo  2=complete
       dirs:    {},    // { markerIdx: 'N'|'E'|'S'|'W' }
-      matches:    [],    // [[leftIdx, rightDisplayPos], ...]
-      shuffle:    null,  // shuffled right column (display pos → original index)
-      gameChoice: null,  // 'escape' | 'valorant' | 'both'
-      done:       false,
+      matches: [],    // [[leftIdx, rightIdx], ...]
+      done:    false,
     },
     s3: {
       cur:     0,
@@ -54,7 +52,7 @@ function unlocked(n) {
   switch (n) {
     case 1: return true;
     case 2: return st.s1.done;
-    case 3: return st.s2.done;
+    case 3: return st.s2.done;                               // no time gate — per spec
     case 4: return st.s3.done;
     case 5: return st.s4.done;
   }
@@ -123,7 +121,7 @@ function lockedPreview(n) {
   const s = n * 17; // deterministic seed per stage
   const previews = {
     2: `${noiseDiv()}<div class="lock-preview">${corruptText('The',s)} <span class="blk">████████</span> ${corruptText('walk is just the beginning. The map holds',s+3)} <span class="blk">████████████</span> ${corruptText('answers. Look closely at what',s+9)} <span class="blk">███████████████</span> ${corruptText('faces.',s+12)}<div class="lock-time">[ ${corruptText('finish the morning walk to continue',s+15)} ]</div></div>`,
-    3: `${noiseDiv()}<div class="lock-preview">${corruptText('The city of',s)} <span class="blk">██████████</span> ${corruptText('awaits. A trail through',s+3)} <span class="blk">█</span> ${corruptText('stops — Rituals,',s+7)} <span class="blk">████████████</span>${corruptText(', the old gate.',s+10)}<div class="lock-time">[ ${corruptText('finish the map to continue',s+13)} ]</div></div>`,
+    3: `${noiseDiv()}<div class="lock-preview">${corruptText('The city of',s)} <span class="blk">██████████</span> ${corruptText('awaits. A trail through',s+3)} <span class="blk">█</span> ${corruptText('stops — Rituals,',s+7)} <span class="blk">████████████</span>${corruptText(', the old gate, good coffee.',s+10)}<div class="lock-time">[ ${corruptText('finish the map to continue',s+13)} ]</div></div>`,
     4: `${noiseDiv()}<div class="lock-preview"><span class="blk">██</span> ${corruptText('countries. Only one survives. The clues will lead you to',s)} <span class="blk">████████████████████</span><div class="lock-time">[ ${corruptText('finish the trail to continue',s+8)} ]</div></div>`,
     5: `${noiseDiv()}<div class="lock-preview"><span class="blk">████████████████████████████████████</span> <span class="blk">████████████</span> <span class="blk">████</span><div class="lock-time">[ ${corruptText('finish dinner to continue',s+2)} ]</div></div>`,
   };
@@ -152,11 +150,11 @@ function s1() {
   return `
     <div class="label">day recovered... fragment 1 of 5</div>
     <div class="story">
-      The plan begins here. After breakfast, ${word} needs a walk.
-      The path is familiar, time to take a breath of fresh air.
-      The walk awaits.
+      The plan begins simply. After breakfast, ${word} needs a walk.
+      The route is familiar. The air is fresh.
+      Some things were never corrupted.
     </div>
-    ${solved ? `<div class="msg ok show">✓ corruption restored - "${DOG_NAME}" recovered ${heartSVG()}</div>` : ''}
+    ${solved ? `<div class="msg ok show">✓ corruption restored — "${DOG_NAME}" recovered ${heartSVG()}</div>` : ''}
     ${!solved ? `
       <div class="row">
         <input class="inp" id="s1inp" type="text"
@@ -166,7 +164,7 @@ function s1() {
           inputmode="text" enterkeyhint="go" />
         <button class="btn" onclick="checkS1()">restore</button>
       </div>
-      <div class="msg bad" id="s1err">incorrect - Did you forget the name of our dog?</div>
+      <div class="msg bad" id="s1err">incorrect — try again</div>
     ` : ''}
     ${solved && !done ? `<button class="btn amber full mt8" onclick="doneS1()">mark as complete — unlock stage 2 →</button>` : ''}
     ${done ? `<div class="badge">✓ fragment 1 restored ${heartSVG()}</div>` : ''}`;
@@ -189,13 +187,10 @@ function checkS1() {
 function doneS1() { st.s1.done = true; st._completedAt_1 = Date.now(); save(); render(); }
 
 // ╔══════════════════════════════════════════════════════════════╗
-// ║  STAGE 2 — MAP PUZZLE                                        ║
+// ║  STAGE 2 — MAP PUZZLE                                       ║
 // ╚══════════════════════════════════════════════════════════════╝
 function s2() {
-  if (st.s2.done) {
-    const label = { escape: 'escape academy 🎮', valorant: 'valorant 🔫', both: 'escape academy & valorant 🎮🔫' }[st.s2.gameChoice] || '🎮';
-    return `<div class="badge">✓ fragment 2 restored ${heartSVG()} — Afternoon gaming: ${label}</div>`;
-  }
+  if (st.s2.done) return `<div class="badge">✓ fragment 2 restored ${heartSVG()} — mission: escape academy 🎮</div>`;
   if (st.s2.sub === 0) return s2a();
   if (st.s2.sub === 1) return s2b();
   return '';
@@ -209,7 +204,7 @@ function s2a() {
     <div class="label">sub-step 2a // the map</div>
     <div class="map-prog" id="mapProg">markers located: ${ans} / ${tot}</div>
     <div id="map"></div>
-    <div class="small dimtxt mb8">tap a numbered marker and pick the direction it faces</div>
+    <div class="small dimtxt mb8">tap a numbered marker — pick the direction it faces</div>
     ${all ? `
       <hr class="div">
       <div class="small greentxt mb8">✓ all markers located</div>
@@ -218,36 +213,32 @@ function s2a() {
 }
 
 function s2b() {
-  if (!st.s2.shuffle) {
-    st.s2.shuffle = [...Array(BINGO_RIGHT.length).keys()].sort(() => Math.random() - .5);
-    save();
-  }
-  const hits    = st.s2.matches;
-  const shuffle = st.s2.shuffle;
+  const hits = st.s2.matches;
   return `
     <div class="label">sub-step 2b // word association</div>
     <div class="bingo-hint">
-      <div class="hint-fact">✦ did you know?</div>
-      <div class="hint-cap">Our first date was at a restaurant facing West.</div>
+      <div class="hint-ph">
+        <!-- PLACEHOLDER: replace with <img src="ciao-bella-map.png" style="width:100%;height:100%;object-fit:cover;border-radius:2px;"> -->
+        📍 [map screenshot: Ciao Bella Restaurant, London — compass → West]
+      </div>
+      <div class="hint-cap">"face what you know"</div>
     </div>
-    <div class="small dimtxt mb8">connect each object to its associated word — objects facing the right direction will bloom.</div>
+    <div class="small dimtxt mb8">connect objects to their associated words. only correctly-oriented objects have valid matches.</div>
     <div class="bingo-wrap">
       <div class="bingo-col" id="bleft">
         ${BINGO_LEFT.map((w, i) => {
-          const m   = hits.find(h => h[0] === i);
-          const cls = m ? (st.s2.dirs[i] === CORRECT_DIR ? ' floral' : ' wrong-dir') : '';
-          return `<div class="bingo-item${cls}" id="bl${i}" ${m ? '' : `onclick="pickLeft(${i})"`}>${w}</div>`;
+          const done = hits.some(m => m[0] === i);
+          return `<div class="bingo-item${done ? ' hit' : ''}" id="bl${i}" onclick="pickLeft(${i})">${w}</div>`;
         }).join('')}
       </div>
       <div class="bingo-col" id="bright">
-        ${shuffle.map((origIdx, j) => {
-          const m   = hits.find(h => h[1] === j);
-          const cls = m ? (st.s2.dirs[m[0]] === CORRECT_DIR ? ' floral' : ' wrong-dir') : '';
-          return `<div class="bingo-item${cls}" id="br${j}" ${m ? '' : `onclick="pickRight(${j})"`}>${BINGO_RIGHT[origIdx]}</div>`;
+        ${BINGO_RIGHT.map((w, i) => {
+          const done = hits.some(m => m[1] === i);
+          return `<div class="bingo-item${done ? ' hit' : ''}" id="br${i}" onclick="pickRight(${i})">${w}</div>`;
         }).join('')}
       </div>
     </div>
-    <div class="small greentxt" id="bingoSt">${hits.length}/${BINGO_LEFT.length} connections made</div>`;
+    <div class="small greentxt" id="bingoSt">${hits.length}/2 connections found</div>`;
 }
 
 function goS2b() { st.s2.sub = 1; save(); render(); }
@@ -299,7 +290,7 @@ function openModal(idx) {
   const m = MARKERS[idx];
   document.getElementById('mTitle').textContent = `${m.name} — MARKER ${idx + 1}`;
   const img = document.getElementById('mImg');
-  img.innerHTML = `<img src="./img/marker_${idx + 1}.jpg" alt="${m.name}" style="width:100%;height:100%;object-fit:cover;border-radius:2px;">`;
+  img.innerHTML = `<img src="images/marker-${idx + 1}.jpg" alt="${m.name}" style="width:100%;height:100%;object-fit:cover;border-radius:2px;">`;
   document.querySelectorAll('.dir-btn[data-d]').forEach(b =>
     b.classList.toggle('sel', b.dataset.d === chosenDir)
   );
@@ -314,15 +305,6 @@ function closeModal() {
 }
 
 function pickDir(d) {
-  if (d !== MARKERS[curMarker].dir) {
-    const btn = document.querySelector(`.dir-btn[data-d="${d}"]`);
-    if (btn) {
-      btn.classList.add('sel-wrong');
-      setTimeout(() => btn.classList.remove('sel-wrong'), 600);
-    }
-    chosenDir = null;
-    return;
-  }
   chosenDir = d;
   document.querySelectorAll('.dir-btn[data-d]').forEach(b =>
     b.classList.toggle('sel', b.dataset.d === d)
@@ -342,7 +324,7 @@ function confirmMarker() {
 }
 
 // ╔══════════════════════════════════════════════════════════════╗
-// ║  COMPASS  (Android-first, iOS fallback)                      ║
+// ║  COMPASS  (Android-first, iOS fallback)                     ║
 // ╚══════════════════════════════════════════════════════════════╝
 let compassActive = false;
 
@@ -451,30 +433,32 @@ function tryMatch() {
   lEl.classList.remove('sel');
   rEl.classList.remove('sel');
 
-  if (st.s2.shuffle[r] !== l) {
+  const dirOk  = st.s2.dirs[l] === CORRECT_DIR;
+  const pairOk = VALID_PAIRS[l] === r;
+
+  if (dirOk && pairOk) {
+    st.s2.matches.push([l, r]);
+    save();
+    lEl.classList.add('hit');
+    rEl.classList.add('hit');
+    const stEl = document.getElementById('bingoSt');
+    if (stEl) stEl.textContent = `${st.s2.matches.length}/2 connections found`;
+    if (st.s2.matches.length >= 2) {
+      setTimeout(() => { st.s2.sub = 2; save(); showRev2c(); }, 700);
+    }
+  } else {
     lEl.classList.add('wrong');
-    rEl.classList.add('wrong');
-    setTimeout(() => { lEl.classList.remove('wrong'); rEl.classList.remove('wrong'); }, 600);
-    return;
-  }
-
-  st.s2.matches.push([l, r]);
-  save();
-
-  const cls = st.s2.dirs[l] === MARKERS[l].dir ? 'floral' : 'wrong-dir';
-  lEl.classList.add(cls);
-  rEl.classList.add(cls);
-
-  const stEl = document.getElementById('bingoSt');
-  if (stEl) stEl.textContent = `${st.s2.matches.length}/${BINGO_LEFT.length} connections made`;
-
-  if (st.s2.matches.length >= BINGO_LEFT.length) {
-    setTimeout(() => { st.s2.sub = 2; save(); showRev2c(); }, 700);
+    if (!dirOk) {
+      // wrong direction — only the left item flashes
+      setTimeout(() => lEl.classList.remove('wrong'), 600);
+    } else {
+      rEl.classList.add('wrong');
+      setTimeout(() => { lEl.classList.remove('wrong'); rEl.classList.remove('wrong'); }, 600);
+    }
   }
 }
 
 function showRev2c() { document.getElementById('rev2c').classList.add('on'); }
-function pickGame(choice) { st.s2.gameChoice = choice; closeRev2c(); }
 function closeRev2c() {
   document.getElementById('rev2c').classList.remove('on');
   st.s2.done = true; st._completedAt_2 = Date.now();
@@ -665,15 +649,12 @@ function _completeStage(n) {
       st.s1.solved = true;
       st.s1.done   = true;
       break;
-    case 2: {
-      MARKERS.forEach((m, i) => { st.s2.dirs[i] = m.dir; });
-      const shuf = [...Array(BINGO_RIGHT.length).keys()].sort(() => Math.random() - .5);
-      st.s2.shuffle = shuf;
-      st.s2.matches = BINGO_LEFT.map((_, i) => [i, shuf.indexOf(i)]);
+    case 2:
+      MARKERS.forEach((_, i) => { st.s2.dirs[i] = 'W'; });
+      st.s2.matches = [[0, 0], [1, 1]];
       st.s2.sub  = 2;
       st.s2.done = true;
       break;
-    }
     case 3:
       STOPS.forEach((s, i) => {
         st.s3.answers[i] = s.blanks.map(() => '(skipped)');
@@ -706,13 +687,6 @@ function devReset() {
   render();
 }
 
-function devSkipAllDirs() {
-  MARKERS.forEach((m, i) => { st.s2.dirs[i] = m.dir; });
-  save();
-  closeModal();
-  render();
-}
-
 // Dev bar appended inside each card-body when DEV_MODE is active
 function devBar(n) {
   if (!DEV_MODE) return '';
@@ -735,8 +709,6 @@ function devBoot() {
   badge.className = 'dev-hdr';
   badge.innerHTML = `<span class="dev-tag">DEV MODE</span> <button class="dev-btn" onclick="devReset()">↺ reset all</button>`;
   hdr.appendChild(badge);
-  const skipBtn = document.getElementById('devDirSkip');
-  if (skipBtn) skipBtn.style.display = '';
 }
 
 // ╔══════════════════════════════════════════════════════════════╗

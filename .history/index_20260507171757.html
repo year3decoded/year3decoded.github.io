@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f0e6d8">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>CORRUPTED_PLAN.dat</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- progressive healing background layers -->
+<div id="bgLayer">
+  <div id="corruptLayer"></div>
+  <div id="warmLayer"></div>
+  <div id="flowerLayer"></div>
+</div>
+<div id="particleLayer"></div>
+
+<div class="hdr">
+  <h1>CORRUPTED_PLAN.dat</h1>
+  <p>a love story, interrupted <svg class="inline-heart" viewBox="0 0 20 18" width="8" height="7" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10,16 C4,10 1,7 1,4.5 A4,4 0 0 1 10,3 A4,4 0 0 1 19,4.5 C19,7 16,10 10,16Z" fill="#c8566e" opacity="0.55"/></svg> &bull; 5 fragments to recover</p>
+</div>
+
+<div class="stages" id="stagesEl"></div>
+
+<!-- ═══════════ MARKER MODAL ═══════════ -->
+<div class="overlay" id="markerOverlay">
+  <div class="modal">
+    <h2 id="mTitle">MARKER_01</h2>
+    <div class="ph-img" id="mImg">📍 photo placeholder</div>
+    <div class="label">which direction does this face?</div>
+    <div class="dir-grid">
+      <div class="dir-btn ghost"></div>
+      <div class="dir-btn" data-d="N" onclick="pickDir('N')">N</div>
+      <div class="dir-btn ghost"></div>
+      <div class="dir-btn" data-d="W" onclick="pickDir('W')">W</div>
+      <div class="dir-btn ghost"></div>
+      <div class="dir-btn" data-d="E" onclick="pickDir('E')">E</div>
+      <div class="dir-btn ghost"></div>
+      <div class="dir-btn" data-d="S" onclick="pickDir('S')">S</div>
+      <div class="dir-btn ghost"></div>
+    </div>
+    <div class="compass-wrap">
+      <div class="compass"><div class="needle" id="needle"></div></div>
+      <div class="compass-lbl" id="compassLbl">compass: tap to activate</div>
+      <button class="btn small mt8" onclick="startCompass()" id="compassBtn">activate compass</button>
+    </div>
+    <button id="devDirSkip" class="dev-btn" style="display:none;width:100%;margin-bottom:10px;" onclick="devSkipAllDirs()">⚡ dev: mark all markers as West</button>
+    <div class="modal-row">
+      <button class="btn" style="flex:1" onclick="confirmMarker()">confirm ✓</button>
+      <button class="btn red" onclick="closeModal()">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ REVEAL 2c ═══════════ -->
+<div class="fsrev" id="rev2c">
+  <div class="rev-title">Fragment 2 restored.</div>
+  <div class="rev-sub">What's the plan for tonight?</div>
+  <div class="game-choice-wrap">
+    <div class="game-choice-item">
+      <img src="./img/escape-academy.png" class="game-choice-img" alt="Escape Academy">
+      <button class="btn" onclick="pickGame('escape')">Escape Academy</button>
+    </div>
+    <div class="game-choice-item">
+      <img src="./img/valorant.png" class="game-choice-img" alt="Valorant">
+      <button class="btn" onclick="pickGame('valorant')">Valorant</button>
+    </div>
+  </div>
+  <button class="btn amber" style="width:100%;max-width:300px;" onclick="pickGame('both')">both?</button>
+</div>
+
+<!-- ═══════════ REVEAL 4 ═══════════ -->
+<div class="fsrev" id="rev4">
+  <div style="font-size:2.8rem;margin-bottom:18px">🍛</div>
+  <div class="rev-title">Fragment 4 restored.</div>
+  <div class="rev-sub">Dinner awaits.</div>
+  <div class="rev-info" id="revRestaurantName"></div>
+  <div class="rev-addr" id="revRestaurantAddr"></div>
+  <a class="btn amber mb14" id="revMapsLink" href="#" target="_blank" rel="noopener">open in maps →</a>
+  <button class="btn" onclick="closeRev4()">continue →</button>
+</div>
+
+<div id="confetti"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="config.js"></script>
+<script>
+  // Populate Stage 4 reveal from config at runtime
+  document.getElementById('revRestaurantName').textContent = RESTAURANT_NAME;
+  document.getElementById('revRestaurantAddr').textContent = RESTAURANT_ADDRESS;
+  document.getElementById('revMapsLink').href = RESTAURANT_MAP_URL;
+</script>
+<script src="heal.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -17,10 +17,10 @@ const MAP_ZOOM   = 16;
 // Names must match BINGO_LEFT order exactly.
 const MARKERS = [
   { name: 'Tree',             lat: 52.334620, lng: 5.541623,  dir: 'E' }, // PLACEHOLDER
-  { name: 'Green Bench',      lat: 52.335632, lng: 5.541133,  dir: 'S' }, // PLACEHOLDER
-  { name: 'Bridge',           lat: 52.335578, lng: 5.540539,  dir: 'S' }, // PLACEHOLDER
+  { name: 'Green Bench',      lat: 52.335632, lng: 5.541133,  dir: 'N' }, // PLACEHOLDER
+  { name: 'Bridge',           lat: 52.335578, lng: 5.540539,  dir: 'N' }, // PLACEHOLDER
   { name: 'Stone Fence',      lat: 52.335988, lng: 5.537169,  dir: 'N' }, // PLACEHOLDER
-  { name: 'PostNL letterbox', lat: 52.335569, lng: 5.535894,  dir: 'S' }, // PLACEHOLDER
+  { name: 'PostNL letterbox', lat: 52.335569, lng: 5.535894,  dir: 'N' }, // PLACEHOLDER
   { name: 'Red Dome',         lat: 52.334416, lng: 5.534418,  dir: 'W' }, // PLACEHOLDER
   { name: 'Silver Bench',     lat: 52.334124, lng: 5.536303,  dir: 'N' }, // PLACEHOLDER
   { name: 'School',           lat: 52.333265, lng: 5.536561,  dir: 'W' }, // PLACEHOLDER
@@ -39,17 +39,17 @@ const CORRECT_DIR = 'W';
 const STOPS = [
   {
     name:   'Rituals',
-    desc:   'A perfect smell in the middle of the city.',
+    desc:   'A haven of calm in the middle of the city.',
     // PLACEHOLDER: real Google Maps link
     maps:   'https://maps.google.com/?q=Rituals+Amersfoort+centrum',
-    story:  'We walked into Rituals, and Ellie spent __0__ minutes smelling everything, while Sam pretended not to enjoy it.',
+    story:  'And then they walked into Rituals, and Ellie spent __0__ minutes smelling everything while Sam pretended not to enjoy it.',
     blanks: ['...how many minutes?'],
     photo:  false,
     fact:   null,
   },
   {
     name:   'Tara Buddha Store',
-    desc:   'Smells, crystals, and things that make the soul feel lighter.',
+    desc:   'Serenity, crystals, and things that make the soul feel lighter.',
     // PLACEHOLDER: real Google Maps link
     maps:   'https://maps.google.com/?q=Tara+Buddha+Amersfoort',
     story:  'Inside, everything smelled like __0__ and looked like it had a story.',
@@ -62,8 +62,8 @@ const STOPS = [
     desc:   'The unknown snack challenge.',
     // PLACEHOLDER: real Google Maps link
     maps:   'https://maps.google.com/?q=candy+shop+Amersfoort',
-    story:  'Sam picked __0__ for Ellie and Ellie picked __1__ for Sam, and honestly __2__ was better than expected.',
-    blanks: ["Sam's pick for Ellie", "Ellie's pick for Sam", "...which one was better?"],
+    story:  'Sam picked __0__ for Ellie and Ellie picked __1__ for Sam, and honestly __2__ was the worst decision.',
+    blanks: ["Sam's pick for Ellie", "Ellie's pick for Sam", "...which one was the worst?"],
     photo:  false,
     fact:   null,
   },
@@ -76,14 +76,14 @@ const STOPS = [
     blanks: [],
     photo:  true,
     // PLACEHOLDER: swap for a different fun fact if desired
-    fact:   'The Koppelpoort was built around 1425 and is one of the best-preserved medieval water gates in the Netherlands, it served as both a city gate and a working water mill.',
+    fact:   'The Koppelpoort was built around 1425 and is one of the best-preserved medieval water gates in the Netherlands — it served as both a city gate and a working water mill.',
   },
   {
     name:   'Stadscafé Amersfoort',
-    desc:   'The end of the trail. Time to sit and drink.',
+    desc:   'The end of the trail. Time to sit.',
     // PLACEHOLDER: real Google Maps link
     maps:   'https://maps.google.com/?q=Stadscafe+Amersfoort',
-    story:  'We sat down. Ellie ordered __0__ and Sam ordered __1__.',
+    story:  'They sat down. Ellie ordered her famous __0__ and Sam ordered __1__. The city hummed around them.',
     blanks: ['Ellie ordered...', 'Sam ordered...'],
     photo:  false,
     fact:   null,
@@ -113,4 +113,4 @@ const RESTAURANT_MAP_URL = 'PLACEHOLDER_MAPS_URL';
 
 // ── STAGE 5 MESSAGE ────────────────────────────────────────────
 // PLACEHOLDER: write your personal message here — HTML is allowed
-const S5_MESSAGE = `<p>[I hope you enjoyed today <3.]</p>`;
+const S5_MESSAGE = `<p>[PLACEHOLDER: Write your personal closing message here.]</p>`;

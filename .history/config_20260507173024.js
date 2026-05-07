@@ -39,17 +39,17 @@ const CORRECT_DIR = 'W';
 const STOPS = [
   {
     name:   'Rituals',
-    desc:   'A perfect smell in the middle of the city.',
+    desc:   'A perfect in the middle of the city.',
     // PLACEHOLDER: real Google Maps link
     maps:   'https://maps.google.com/?q=Rituals+Amersfoort+centrum',
-    story:  'We walked into Rituals, and Ellie spent __0__ minutes smelling everything, while Sam pretended not to enjoy it.',
+    story:  'And then they walked into Rituals, and Ellie spent __0__ minutes smelling everything while Sam pretended not to enjoy it.',
     blanks: ['...how many minutes?'],
     photo:  false,
     fact:   null,
   },
   {
     name:   'Tara Buddha Store',
-    desc:   'Smells, crystals, and things that make the soul feel lighter.',
+    desc:   'Serenity, crystals, and things that make the soul feel lighter.',
     // PLACEHOLDER: real Google Maps link
     maps:   'https://maps.google.com/?q=Tara+Buddha+Amersfoort',
     story:  'Inside, everything smelled like __0__ and looked like it had a story.',
@@ -80,10 +80,10 @@ const STOPS = [
   },
   {
     name:   'Stadscafé Amersfoort',
-    desc:   'The end of the trail. Time to sit and drink.',
+    desc:   'The end of the trail. Time to sit.',
     // PLACEHOLDER: real Google Maps link
     maps:   'https://maps.google.com/?q=Stadscafe+Amersfoort',
-    story:  'We sat down. Ellie ordered __0__ and Sam ordered __1__.',
+    story:  'They sat down. Ellie ordered her famous __0__ and Sam ordered __1__. The city hummed around them.',
     blanks: ['Ellie ordered...', 'Sam ordered...'],
     photo:  false,
     fact:   null,
@@ -113,4 +113,4 @@ const RESTAURANT_MAP_URL = 'PLACEHOLDER_MAPS_URL';
 
 // ── STAGE 5 MESSAGE ────────────────────────────────────────────
 // PLACEHOLDER: write your personal message here — HTML is allowed
-const S5_MESSAGE = `<p>[I hope you enjoyed today <3.]</p>`;
+const S5_MESSAGE = `<p>[PLACEHOLDER: Write your personal closing message here.]</p>`;

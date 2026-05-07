@@ -80,10 +80,10 @@ const STOPS = [
   },
   {
     name:   'Stadscafé Amersfoort',
-    desc:   'The end of the trail. Time to sit and drink.',
+    desc:   'The end of the trail. Time to sit.',
     // PLACEHOLDER: real Google Maps link
     maps:   'https://maps.google.com/?q=Stadscafe+Amersfoort',
-    story:  'We sat down. Ellie ordered __0__ and Sam ordered __1__.',
+    story:  'They sat down. Ellie ordered her famous __0__ and Sam ordered __1__. The city hummed around them.',
     blanks: ['Ellie ordered...', 'Sam ordered...'],
     photo:  false,
     fact:   null,
@@ -113,4 +113,4 @@ const RESTAURANT_MAP_URL = 'PLACEHOLDER_MAPS_URL';
 
 // ── STAGE 5 MESSAGE ────────────────────────────────────────────
 // PLACEHOLDER: write your personal message here — HTML is allowed
-const S5_MESSAGE = `<p>[I hope you enjoyed today <3.]</p>`;
+const S5_MESSAGE = `<p>[PLACEHOLDER: Write your personal closing message here.]</p>`;

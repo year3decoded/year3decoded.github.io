@@ -113,4 +113,4 @@ const RESTAURANT_MAP_URL = 'PLACEHOLDER_MAPS_URL';
 
 // ── STAGE 5 MESSAGE ────────────────────────────────────────────
 // PLACEHOLDER: write your personal message here — HTML is allowed
-const S5_MESSAGE = `<p>[I hope you enjoyed today <3.]</p>`;
+const S5_MESSAGE = `<p>[PLACEHOLDER: Write your personal closing message here.]</p>`;

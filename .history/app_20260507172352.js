@@ -227,8 +227,11 @@ function s2b() {
   return `
     <div class="label">sub-step 2b // word association</div>
     <div class="bingo-hint">
-      <div class="hint-fact">✦ did you know?</div>
-      <div class="hint-cap">Our first date was at a restaurant facing West.</div>
+      <div class="hint-ph">
+        <img src="./img/ciao-bella-map.png" style="width:100%;height:100%;object-fit:cover;border-radius:2px;">
+        
+      </div>
+      <div class="hint-cap">"face what you know"</div>
     </div>
     <div class="small dimtxt mb8">connect each object to its associated word — objects facing the right direction will bloom.</div>
     <div class="bingo-wrap">
@@ -342,7 +345,7 @@ function confirmMarker() {
 }
 
 // ╔══════════════════════════════════════════════════════════════╗
-// ║  COMPASS  (Android-first, iOS fallback)                      ║
+// ║  COMPASS  (Android-first, iOS fallback)                     ║
 // ╚══════════════════════════════════════════════════════════════╝
 let compassActive = false;
 
